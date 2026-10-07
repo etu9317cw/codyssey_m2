@@ -9,7 +9,7 @@ __pycache__/
 backend/.env
 *service*account*.json
 backend/data/*.local.json
-frontend/js/config.js
+frontend/config.js
 
 # 작업 메모(제출 제외)
 _작업파일/
