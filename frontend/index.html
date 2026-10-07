@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>센터 운영 비서</title>
+  <meta name="description" content="에너지인력양성센터 교육동 전력 사용량 데이터를 아는 AI 비서. 데이터 관리·요약·대화 기록.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">⚡</span>
+      <div>
+        <h1>센터 운영 비서</h1>
+        <p class="brand-sub">에너지인력양성센터 · 교육동 전력 사용량을 아는 AI 비서</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="serverBadge" class="badge badge-muted" title="백엔드 상태">서버 확인 중…</span>
+      <button id="themeToggle" class="icon-btn" aria-label="다크 모드 전환" title="다크 모드 전환">🌙</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- 왼쪽: 요약 + 데이터 관리 -->
+    <section class="column column-left">
+      <article class="card" id="summaryCard" aria-labelledby="summaryTitle">
+        <div class="card-head">
+          <h2 id="summaryTitle">데이터 요약</h2>
+          <button id="refreshSummary" class="ghost-btn" type="button">새로고침</button>
+        </div>
+        <p class="hint">이 요약이 그대로 비서의 시스템 프롬프트에 들어갑니다. 비서는 여기 있는 숫자만 말합니다.</p>
+        <div class="summary-grid" id="summaryGrid">
+          <div class="stat"><span class="stat-label">기간</span><strong id="sumPeriod">—</strong></div>
+          <div class="stat"><span class="stat-label">레코드</span><strong id="sumCount">—</strong></div>
+          <div class="stat"><span class="stat-label">평균</span><strong id="sumAvg">—</strong></div>
+          <div class="stat"><span class="stat-label">최대 / 최소</span><strong id="sumMaxMin">—</strong></div>
+          <div class="stat"><span class="stat-label">최근 7일 평균</span><strong id="sumRecent">—</strong></div>
+          <div class="stat"><span class="stat-label">추세</span><strong id="sumTrend">—</strong></div>
+        </div>
+        <canvas id="sparkline" class="sparkline" width="600" height="120" aria-label="최근 60일 추이 그래프" role="img"></canvas>
+        <p class="hint" id="sumLatest"></p>
+      </article>
+
+      <article class="card" aria-labelledby="dataTitle">
+        <div class="card-head">
+          <h2 id="dataTitle">데이터 관리</h2>
+          <span class="badge badge-muted" id="dataCountBadge">0건</span>
+        </div>
+        <form id="dataForm" class="data-form" novalidate>
+          <label>날짜
+            <input type="date" id="dataDate" required>
+          </label>
+          <label>값 <span id="unitLabel">(kWh)</span>
+            <input type="number" id="dataValue" min="0" step="0.1" placeholder="1834.5" required>
+          </label>
+          <label class="wide">메모
+            <input type="text" id="dataMemo" maxlength="200" placeholder="예: 개강 첫 주, 정전·점검">
+          </label>
+          <div class="form-actions wide">
+            <button type="submit" class="primary-btn" id="dataSubmit">추가</button>
+            <button type="button" class="ghost-btn hidden" id="dataCancel">수정 취소</button>
+            <span class="form-msg" id="dataMsg" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+        <div class="table-wrap">
+          <table class="data-table" aria-describedby="dataTitle">
+            <thead><tr><th>날짜</th><th class="num">값</th><th>메모</th><th class="actions">작업</th></tr></thead>
+            <tbody id="dataBody"><tr><td colspan="4" class="empty">불러오는 중…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="hint">최근 30건을 최신순으로 보여 줍니다. 수정은 행의 ✎, 삭제는 ✕ (확인 후 삭제).</p>
+      </article>
+    </section>
+
+    <!-- 오른쪽: 채팅 + 대화 기록 -->
+    <section class="column column-right">
+      <article class="card chat-card" aria-labelledby="chatTitle">
+        <div class="card-head">
+          <h2 id="chatTitle">비서와 대화</h2>
+          <div class="chat-head-actions">
+            <span class="badge badge-muted" id="convBadge">새 대화</span>
+            <button type="button" class="ghost-btn" id="newChat">새 대화</button>
+          </div>
+        </div>
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="msg msg-assistant">
+            <div class="msg-bubble">안녕하세요. 센터 교육동 전력 사용량 데이터를 알고 있는 운영 비서입니다. "최근 추세가 어떤가요?", "최대 사용일은 언제인가요?"처럼 물어보세요. 요약에 없는 숫자는 만들어 말하지 않습니다.</div>
+          </div>
+        </div>
+        <form id="chatForm" class="chat-form" novalidate>
+          <textarea id="chatInput" rows="2" maxlength="1000" placeholder="질문을 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)" required></textarea>
+          <div class="chat-form-row">
+            <span class="counter"><span id="chatCount">0</span>/1000</span>
+            <span class="form-msg" id="chatMsg" role="status" aria-live="polite"></span>
+            <button type="submit" class="primary-btn" id="chatSend">보내기</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card" aria-labelledby="historyTitle">
+        <div class="card-head">
+          <h2 id="historyTitle">대화 기록</h2>
+          <button type="button" class="ghost-btn" id="refreshHistory">새로고침</button>
+        </div>
+        <ul class="history" id="historyList"><li class="empty">불러오는 중…</li></ul>
+        <p class="hint">대화는 비서가 답한 뒤 서버에 자동 저장됩니다. 항목을 누르면 그 대화를 불러와 이어서 질문할 수 있습니다.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>3단계 M-2 · 바닐라 HTML/CSS/JS + FastAPI + Firestore · 비서의 답변은 저장된 데이터 요약을 근거로 하며 참고용입니다. 개인정보를 입력하지 마세요.</p>
+    <p><a id="docsLink" href="#" target="_blank" rel="noopener">API 문서(Swagger)</a></p>
+  </footer>
+
+  <script src="config.js" onerror="window.APP_CONFIG = window.APP_CONFIG || { API_BASE_URL: 'http://localhost:8000', REQUEST_TIMEOUT_MS: 25000 }"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
