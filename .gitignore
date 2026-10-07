@@ -1,0 +1,16 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 비밀·로컬 상태
+.env
+backend/.env
+*service*account*.json
+backend/data/*.local.json
+frontend/js/config.js
+
+# 작업 메모(제출 제외)
+_작업파일/
+TASK.md
