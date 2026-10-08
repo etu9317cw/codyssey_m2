@@ -8,7 +8,7 @@ FastAPI 백엔드(Render) + Firestore + 바닐라 HTML/CSS/JS 프론트(Vercel)�
 | 프론트 URL (Vercel) | (배포 후 기록) |
 | 백엔드 URL (Render) | (배포 후 기록) |
 | Swagger UI | (백엔드 URL)/docs |
-| 설계 문서 | [`docs/설계문서.md`](./docs/설계문서.md) — 계층 분리 기준, API 표, 컨텍스트 주입 흐름, 오류 처리 |
+| 설계 문서 | [`docs/설계문서.md`](./docs/설계문서.md) — 계층 분리 기준, API 표, 컨텍스트 주입 흐름, 오류 처리, **요구사항 대조표(11장)** |
 | 캡처 | [`캡처_체크리스트.md`](./캡처_체크리스트.md), `docs/screenshots/` |
 
 > 백엔드는 Firebase 키가 없으면 **memory 저장소**(JSON 파일)로 자동 동작합니다. 채점자가 Firebase 없이도 `uvicorn main:app`만으로 전체 기능을 실행해 볼 수 있습니다.
@@ -27,9 +27,9 @@ S-01에서 비서가 "최근 7일 평균 1,710.7 kWh, 직전 7일 대비 −19.0
 |---|---|---|
 | 데이터 기반 AI 채팅 | 오른쪽 "비서와 대화". 로딩 표시, Enter 전송, 1,000자 제한, 오류·타임아웃 안내 | `POST /api/chat` |
 | 데이터 요약 | 왼쪽 상단 카드 6개(기간·레코드·평균·최대/최소·최근 7일·추세) + 최근 60일 스파크라인(Canvas) | `GET /api/data/summary` |
-| 데이터 관리(CRUD) | 추가 폼, 최근 30건 표, 행의 ✎ 수정(폼에 불러와 PUT), ✕ 삭제(확인) | `POST/GET/PUT/DELETE /api/data` |
+| 데이터 관리(CRUD) | 추가 폼, 최근 30건 표, 행의 ✎ 수정(폼에 불러와 PUT), ✕ 삭제(확인), CSV 내보내기(전체 레코드) | `POST/GET/PUT/DELETE /api/data` |
 | 대화 기록 | 목록(최근 수정순, 제목·메시지 수·미리보기), 클릭하면 메시지 전체를 불러와 이어서 질문, 삭제 | `GET /api/conversations`, `GET /api/conversations/{id}`, `DELETE` |
-| 보너스 | 다크 모드(🌙, localStorage), 스파크라인 그래프, 서버 상태 배지(저장소 종류·LLM 설정 여부) | `GET /api/health` |
+| 보너스 | 다크 모드(🌙, localStorage), 스파크라인 그래프, CSV 내보내기(브라우저에서 생성), 요약 추가 지표(최근 7일·변화율·최다 메모·마지막 기록), 서버 상태 배지(저장소 종류·LLM 설정 여부) | `GET /api/health` |
 
 ### 컨텍스트 주입 원리
 
@@ -66,7 +66,8 @@ POST /api/chat {message, conversation_id?}
 │   ├── app/routers/  health.py data.py conversations.py chat.py
 │   ├── app/services/ data_service.py conversation_service.py llm_client.py chat_service.py
 │   ├── app/repositories/ base.py memory_repo.py firestore_repo.py
-│   ├── scripts/seed_from_m1.py     # M-1 CSV → data 컬렉션 적재
+│   ├── scripts/seed_from_m1.py     # 동봉 CSV(또는 M-1 원본) → data 컬렉션 적재
+│   ├── data/seed_sample.csv        # M-1 시뮬레이션 데이터 최근 120일 (date,value,memo)
 │   ├── tests/test_api.py           # pytest 17개 (LLM mock, memory 저장소)
 │   ├── requirements.txt / requirements-lock.txt / .env.example
 ├── frontend/
@@ -87,7 +88,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 copy .env.example .env                 # OPENAI_API_KEY 만 채우면 채팅까지 동작. 비우면 채팅만 503(LLM 미설정) 안내
-python scripts/seed_from_m1.py         # (선택) M-1 데이터 120일 적재
+python scripts/seed_from_m1.py         # (선택) 동봉 CSV(M-1 데이터 120일) 적재. 이 저장소만 clone 해도 됨
 uvicorn main:app --reload --port 8000  # Swagger: http://localhost:8000/docs
 python -m pytest tests -q              # 17 passed
 ```
@@ -112,6 +113,7 @@ python -m http.server 5500             # http://localhost:5500
 | `OPENAI_API_KEY` (또는 `CODYSSEY_API_KEY`) | 백엔드 | LLM 키. 기관 프록시 키 또는 개인 OpenAI 키 |
 | `OPENAI_BASE_URL` (또는 `CODYSSEY_BASE_URL`) | 백엔드 | 프록시 주소(`https://copa.codyssey.kr`). 비우면 OpenAI 기본 |
 | `LLM_MODEL` | 백엔드 | 기본 `gemini-3-flash` |
+| `LLM_TIMEOUT` | 백엔드 | LLM 호출 제한 시간(초), 기본 20 |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` **또는** `FIREBASE_PROJECT_ID`·`FIREBASE_CLIENT_EMAIL`·`FIREBASE_PRIVATE_KEY` | 백엔드 | 서비스 계정 키. Render에는 3개 변수 방식이 편함(`PRIVATE_KEY` 줄바꿈은 `\n`) |
 | `ALLOWED_ORIGINS` | 백엔드 | 프론트 주소(쉼표 구분). `*.vercel.app`은 정규식으로 항상 허용 |
 | `DATA_LABEL`, `DATA_UNIT` | 백엔드 | 요약 카드·프롬프트에 표시되는 데이터 이름·단위 |
@@ -124,7 +126,11 @@ python -m http.server 5500             # http://localhost:5500
 1. **Firebase**: 콘솔 → 프로젝트 추가 → Firestore Database 만들기(리전 asia-northeast3) → 프로젝트 설정 › 서비스 계정 › 새 비공개 키 생성. 보안 규칙은 클라이언트 접근 전부 거부(백엔드 Admin SDK만 접근).
 2. **Render**: New Web Service → 이 저장소 → Root Directory `backend`, Build `pip install -r requirements.txt`, Start `uvicorn main:app --host 0.0.0.0 --port $PORT`. 환경변수에 `STORAGE=firestore`, LLM 키, Firebase 3개, `ALLOWED_ORIGINS=https://<프론트>.vercel.app`. 배포 후 `/docs` 확인.
    - 무료 티어는 15분 미사용 시 잠들고 첫 요청에 최대 50초 걸립니다. 프론트는 채팅 타임아웃을 50초로 잡고 상단 배지로 상태를 보여 줍니다.
-3. **Vercel**: Add New Project → 같은 저장소 → Root Directory `frontend`, Framework Other. `config.js`는 커밋하지 않으므로 Build Command에 `echo "window.APP_CONFIG={API_BASE_URL:'https://<백엔드>.onrender.com'}" > config.js`를 넣거나, 배포 전에 `config.js`를 만들어 커밋 제외를 해제합니다.
+3. **Vercel**: Add New Project → 같은 저장소 → Root Directory `frontend`, Framework Other, Output Directory 비움(루트). 환경 변수 `API_BASE_URL=https://<백엔드>.onrender.com`을 등록하고, `config.js`는 커밋하지 않으므로 Build Command에 아래를 넣어 빌드 때 환경 변수로 만듭니다.
+   ```
+   echo "window.APP_CONFIG={API_BASE_URL:'$API_BASE_URL',REQUEST_TIMEOUT_MS:25000}" > config.js
+   ```
+   (대안: 배포 전에 `config.js`를 만들어 커밋 제외를 해제.)
 4. 프론트 URL에서 채팅·CRUD·대화 불러오기 확인 → 스크린샷 3장 → 이 README 상단 URL 3개 기록.
 
 ## 테스트

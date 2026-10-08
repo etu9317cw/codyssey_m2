@@ -1,5 +1,5 @@
 /* 센터 운영 비서 프론트 — 바닐라 JS.
-   구성: 1 설정·fetch 래퍼 · 2 다크 모드 · 3 요약 카드 + 스파크라인 · 4 데이터 CRUD · 5 채팅 · 6 대화 기록 */
+   구성: 1 설정·fetch 래퍼 · 2 다크 모드 · 3 요약 카드 + 스파크라인 · 4 데이터 CRUD + CSV 내보내기 · 5 채팅 · 6 대화 기록 */
 (() => {
   "use strict";
 
@@ -179,6 +179,20 @@
       await Promise.all([loadData(), loadSummary()]);
     } catch (e) { setMsg($("dataMsg"), e.message, "err"); }
     finally { btn.disabled = false; }
+  });
+
+  // CSV 내보내기(보너스): 서버 호출 없이 이미 받아 둔 전체 목록(rowsCache)으로 파일을 만든다. BOM 을 붙여 Excel 에서 한글이 깨지지 않게 한다
+  $("exportCsv").addEventListener("click", () => {
+    if (!rowsCache.length) return setMsg($("dataMsg"), "내보낼 데이터가 없습니다.", "err");
+    const esc = (v) => `"${String(v === null || v === undefined ? "" : v).replace(/"/g, '""')}"`;
+    const lines = ["date,value,memo", ...rowsCache.map((r) => [esc(r.date), r.value, esc(r.memo || "")].join(","))];
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `center_power_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setMsg($("dataMsg"), `${rowsCache.length}건을 CSV로 내보냈습니다.`, "ok");
   });
 
   // ---------- 5. 채팅 ----------

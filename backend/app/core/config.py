@@ -19,6 +19,14 @@ def _first(*names: str, default: str = "") -> str:
     return default
 
 
+def _base_url() -> str | None:
+    """LLM 주소. 비어 있으면 None → openai SDK 기본(OpenAI 공식 API). 프록시 주소에 '/v1'이 없으면 붙인다."""
+    raw = _first("OPENAI_BASE_URL", "CODYSSEY_BASE_URL").rstrip("/")
+    if not raw:
+        return None
+    return raw if raw.endswith("/v1") else raw + "/v1"
+
+
 @dataclass
 class Settings:
     app_name: str = "센터 운영 비서 API"
@@ -26,7 +34,7 @@ class Settings:
     memory_file: Path = field(default_factory=lambda: Path(_first("MEMORY_FILE", default=str(BACKEND_DIR / "data" / "store.local.json"))))
 
     llm_api_key: str = field(default_factory=lambda: _first("OPENAI_API_KEY", "CODYSSEY_API_KEY"))
-    llm_base_url: str = field(default_factory=lambda: _first("OPENAI_BASE_URL", "CODYSSEY_BASE_URL", default="https://copa.codyssey.kr") + ("" if _first("OPENAI_BASE_URL", "CODYSSEY_BASE_URL", default="https://copa.codyssey.kr").rstrip("/").endswith("/v1") else "/v1"))
+    llm_base_url: str | None = field(default_factory=_base_url)   # None 이면 OpenAI 기본
     llm_model: str = field(default_factory=lambda: _first("LLM_MODEL", "CODYSSEY_MODEL", default="gemini-3-flash"))
     llm_timeout: float = field(default_factory=lambda: float(_first("LLM_TIMEOUT", default="20")))
 

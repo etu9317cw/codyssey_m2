@@ -1,7 +1,9 @@
 """M-1 데이터를 비서 DB에 적재한다.
 
-사용: python scripts/seed_from_m1.py [--csv ../../M-1_시계열분석/data/sample/electricity_daily.csv] [--days 120] [--reset]
-- 기본: M-1 시뮬레이션 CSV의 최근 120일을 data 컬렉션에 넣는다 (memo 포함)
+사용: python scripts/seed_from_m1.py [--csv 경로] [--days 120] [--reset]
+- 기본: 동봉한 `backend/data/seed_sample.csv`(M-1 시뮬레이션 CSV의 최근 120일, date·value·memo)를 data 컬렉션에 넣는다.
+  이 저장소만 clone 해도 M-1 폴더 없이 동작한다.
+- --csv: 다른 CSV(예: M-1 원본 ../../M-1_시계열분석/data/sample/electricity_daily.csv, 2년치). date·value·memo 열만 읽는다
 - --reset: 기존 data 컬렉션을 비우고 넣는다
 - STORAGE 설정(memory/firestore)을 그대로 따른다
 """
@@ -18,7 +20,7 @@ sys.path.insert(0, str(BACKEND))
 from app.models.data import DataIn  # noqa: E402
 from app.services import data_service  # noqa: E402
 
-DEFAULT_CSV = BACKEND.parents[1] / "M-1_시계열분석" / "data" / "sample" / "electricity_daily.csv"
+DEFAULT_CSV = BACKEND / "data" / "seed_sample.csv"   # M-1 CSV 최근 120일 동봉본 (원본: ../../M-1_시계열분석/data/sample/electricity_daily.csv)
 
 
 def main() -> None:

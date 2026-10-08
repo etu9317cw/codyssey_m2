@@ -46,7 +46,10 @@
       <article class="card" aria-labelledby="dataTitle">
         <div class="card-head">
           <h2 id="dataTitle">데이터 관리</h2>
-          <span class="badge badge-muted" id="dataCountBadge">0건</span>
+          <div class="chat-head-actions">
+            <span class="badge badge-muted" id="dataCountBadge">0건</span>
+            <button type="button" class="ghost-btn" id="exportCsv" title="저장된 데이터 전체를 CSV 파일로 내려받기">CSV 내보내기</button>
+          </div>
         </div>
         <form id="dataForm" class="data-form" novalidate>
           <label>날짜
@@ -70,7 +73,7 @@
             <tbody id="dataBody"><tr><td colspan="4" class="empty">불러오는 중…</td></tr></tbody>
           </table>
         </div>
-        <p class="hint">최근 30건을 최신순으로 보여 줍니다. 수정은 행의 ✎, 삭제는 ✕ (확인 후 삭제).</p>
+        <p class="hint">최근 30건을 최신순으로 보여 줍니다. 수정은 행의 ✎, 삭제는 ✕ (확인 후 삭제). CSV 내보내기는 전체 레코드를 내려받습니다.</p>
       </article>
     </section>
 
