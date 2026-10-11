@@ -10,7 +10,3 @@ backend/.env
 *service*account*.json
 backend/data/*.local.json
 frontend/config.js
-
-# 작업 메모(제출 제외)
-_작업파일/
-TASK.md

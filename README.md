@@ -8,8 +8,6 @@ FastAPI 백엔드(Render) + Firestore + 바닐라 HTML/CSS/JS 프론트(Vercel)�
 | 프론트 URL (Vercel) | (배포 후 기록) |
 | 백엔드 URL (Render) | (배포 후 기록) |
 | Swagger UI | (백엔드 URL)/docs |
-| 설계 문서 | [`docs/설계문서.md`](./docs/설계문서.md) — 계층 분리 기준, API 표, 컨텍스트 주입 흐름, 오류 처리, **요구사항 대조표(11장)** |
-| 캡처 | [`캡처_체크리스트.md`](./캡처_체크리스트.md), `docs/screenshots/` |
 
 > 백엔드는 Firebase 키가 없으면 **memory 저장소**(JSON 파일)로 자동 동작합니다. 채점자가 Firebase 없이도 `uvicorn main:app`만으로 전체 기능을 실행해 볼 수 있습니다.
 
@@ -73,8 +71,7 @@ POST /api/chat {message, conversation_id?}
 ├── frontend/
 │   ├── index.html  css/style.css  js/app.js
 │   └── config.example.js           # → config.js (API_BASE_URL)
-├── docs/설계문서.md, docs/screenshots/
-├── 캡처_체크리스트.md
+├── docs/screenshots/
 └── README.md
 ```
 
