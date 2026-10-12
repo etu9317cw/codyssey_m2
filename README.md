@@ -5,13 +5,13 @@ FastAPI 백엔드(Render) + Firestore + 바닐라 HTML/CSS/JS 프론트(Vercel)�
 
 | 항목 | 값 |
 |---|---|
-| 프론트 URL (Vercel) | (배포 후 기록) |
-| 백엔드 URL (Render) | (배포 후 기록) |
-| Swagger UI | (백엔드 URL)/docs |
+| 프론트 URL (Vercel) | https://codyssey-m2.vercel.app |
+| 백엔드 URL (Render) | https://codyssey-m2.onrender.com |
+| Swagger UI | https://codyssey-m2.onrender.com/docs |
 
 > 백엔드는 Firebase 키가 없으면 **memory 저장소**(JSON 파일)로 자동 동작합니다. 채점자가 Firebase 없이도 `uvicorn main:app`만으로 전체 기능을 실행해 볼 수 있습니다.
 
-## 스크린샷 (로컬 실행, 기관 LLM 프록시 연결)
+## 스크린샷 (배포본: Vercel 프론트 + Render 백엔드 + Firestore, 기관 LLM 프록시 연결)
 
 | S-01 요약이 보이는 채팅 질문+답변 | S-02 데이터 추가(CRUD) | S-03 대화 불러오기 |
 |---|---|---|
@@ -51,7 +51,7 @@ POST /api/chat {message, conversation_id?}
 | 저장소 | Firestore 컬렉션 `data`·`conversations` / 로컬·테스트용 memory 저장소(JSON 파일) — `STORAGE` 환경변수로 전환 |
 | LLM | 기관 제공 LLM 프록시(OpenAI 호환 Chat Completions), 기본 모델 `gemini-3-flash`. 개인 OpenAI 키도 같은 변수로 동작 |
 | 프론트 | HTML/CSS/JS 순수 구현(프레임워크 없음), fetch + AbortController, Canvas 스파크라인, CSS 변수 다크 모드, 반응형 900/600px |
-| 배포 | 백엔드 Render Web Service(Root Directory `backend`), 프론트 Vercel(Root Directory `frontend`) |
+| 배포 | 백엔드 Render Web Service(Free, Singapore, Root Directory `backend`), 프론트 Vercel(Hobby, Root Directory `frontend`), Firestore(서울 `asia-northeast3`) |
 
 ## 폴더 구조
 
@@ -111,7 +111,7 @@ python -m http.server 5500             # http://localhost:5500
 | `OPENAI_BASE_URL` (또는 `CODYSSEY_BASE_URL`) | 백엔드 | 프록시 주소(`https://copa.codyssey.kr`). 비우면 OpenAI 기본 |
 | `LLM_MODEL` | 백엔드 | 기본 `gemini-3-flash` |
 | `LLM_TIMEOUT` | 백엔드 | LLM 호출 제한 시간(초), 기본 20 |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` **또는** `FIREBASE_PROJECT_ID`·`FIREBASE_CLIENT_EMAIL`·`FIREBASE_PRIVATE_KEY` | 백엔드 | 서비스 계정 키. Render에는 3개 변수 방식이 편함(`PRIVATE_KEY` 줄바꿈은 `\n`) |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` **또는** `FIREBASE_PROJECT_ID`·`FIREBASE_CLIENT_EMAIL`·`FIREBASE_PRIVATE_KEY` | 백엔드 | 서비스 계정 키. `FIREBASE_SERVICE_ACCOUNT_JSON`은 키 JSON 파일 경로(또는 JSON 문자열). 이 배포는 Render **Secret File** `firebase-key.json` → 경로 `/etc/secrets/firebase-key.json`. 3개 변수 방식도 동작(`PRIVATE_KEY` 줄바꿈은 `\n`) |
 | `ALLOWED_ORIGINS` | 백엔드 | 프론트 주소(쉼표 구분). `*.vercel.app`은 정규식으로 항상 허용 |
 | `DATA_LABEL`, `DATA_UNIT` | 백엔드 | 요약 카드·프롬프트에 표시되는 데이터 이름·단위 |
 | `API_BASE_URL` | 프론트 `config.js` | 백엔드 주소 |
@@ -121,13 +121,14 @@ python -m http.server 5500             # http://localhost:5500
 ## 배포 절차 (GitHub → Render + Vercel)
 
 1. **Firebase**: 콘솔 → 프로젝트 추가 → Firestore Database 만들기(리전 asia-northeast3) → 프로젝트 설정 › 서비스 계정 › 새 비공개 키 생성. 보안 규칙은 클라이언트 접근 전부 거부(백엔드 Admin SDK만 접근).
-2. **Render**: New Web Service → 이 저장소 → Root Directory `backend`, Build `pip install -r requirements.txt`, Start `uvicorn main:app --host 0.0.0.0 --port $PORT`. 환경변수에 `STORAGE=firestore`, LLM 키, Firebase 3개, `ALLOWED_ORIGINS=https://<프론트>.vercel.app`. 배포 후 `/docs` 확인.
+2. **Render**: New Web Service → **Public Git Repository**에 이 저장소 주소(GitHub 앱 권한 없이 연결) → Root Directory `backend`, Build `pip install -r requirements.txt`, Start `uvicorn main:app --host 0.0.0.0 --port $PORT`, Health Check Path `/api/health`, Free. 환경변수에 `STORAGE=firestore`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `FIREBASE_SERVICE_ACCOUNT_JSON=/etc/secrets/firebase-key.json`, `ALLOWED_ORIGINS=https://<프론트>.vercel.app`. **Secret Files**에 `firebase-key.json`(서비스 계정 키 JSON 전체)을 붙여 넣습니다. 배포 후 `/api/health`(`storage: firestore`)와 `/docs` 확인. Python은 Render 기본값(3.14)으로 빌드됩니다.
+   - 공개 저장소 주소로 연결하면 push 뒤 자동 재배포가 되지 않을 수 있습니다. 백엔드를 고쳤거나 환경 변수를 "Save only"로 저장했으면 **Manual Deploy → Deploy latest commit**으로 다시 배포합니다.
    - 무료 티어는 15분 미사용 시 잠들고 첫 요청에 최대 50초 걸립니다. 프론트는 채팅 타임아웃을 50초로 잡고 상단 배지로 상태를 보여 줍니다.
-3. **Vercel**: Add New Project → 같은 저장소 → Root Directory `frontend`, Framework Other, Output Directory 비움(루트). 환경 변수 `API_BASE_URL=https://<백엔드>.onrender.com`을 등록하고, `config.js`는 커밋하지 않으므로 Build Command에 아래를 넣어 빌드 때 환경 변수로 만듭니다.
+3. **Vercel**: GitHub의 Vercel 앱에 이 저장소 접근을 허용 → Add New Project → 같은 저장소 → Root Directory `frontend`, Framework Other, **Output Directory `.`**(Override를 켜고 점 하나 — 비워 두면 `public` 폴더를 찾다가 "No Output Directory named 'public'"으로 실패). 환경 변수 `API_BASE_URL=https://<백엔드>.onrender.com`을 등록하고, `config.js`는 커밋하지 않으므로 Build Command에 아래를 넣어 빌드 때 환경 변수로 만듭니다.
    ```
    echo "window.APP_CONFIG={API_BASE_URL:'$API_BASE_URL',REQUEST_TIMEOUT_MS:25000}" > config.js
    ```
-   (대안: 배포 전에 `config.js`를 만들어 커밋 제외를 해제.)
+   (대안: 배포 전에 `config.js`를 만들어 커밋 제외를 해제.) 이후 main에 push하면 Vercel이 자동으로 다시 배포합니다.
 4. 프론트 URL에서 채팅·CRUD·대화 불러오기 확인 → 스크린샷 3장 → 이 README 상단 URL 3개 기록.
 
 ## 테스트
