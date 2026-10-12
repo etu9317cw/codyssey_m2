@@ -9,6 +9,13 @@
   const TIMEOUT = CFG.REQUEST_TIMEOUT_MS || 25000;
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => (n === null || n === undefined ? "—" : Number(n).toLocaleString("ko-KR", { maximumFractionDigits: 1 }));
+  // 서버 시각(UTC ISO, "+00:00")을 브라우저 현지 시각 "YYYY-MM-DD HH:MM"으로
+  const fmtTime = (iso) => {
+    const d = new Date(iso);
+    if (!iso || isNaN(d)) return "";
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
   let UNIT = "kWh";
 
   async function api(path, { method = "GET", body, timeout = TIMEOUT } = {}) {
@@ -270,7 +277,7 @@
         const li = document.createElement("li");
         const btn = document.createElement("button");
         btn.type = "button"; btn.className = "history-item" + (c.id === conversationId ? " active" : "");
-        const when = (c.updated_at || "").replace("T", " ").slice(0, 16);
+        const when = fmtTime(c.updated_at);
         btn.innerHTML = `<span class="history-title"></span><span class="history-sub"></span>`;
         btn.querySelector(".history-title").textContent = c.title || "(제목 없음)";
         btn.querySelector(".history-sub").textContent = `${c.message_count}개 메시지 · ${when} · ${c.preview || ""}`;
@@ -292,7 +299,7 @@
       const c = await api(`/api/conversations/${id}`);
       conversationId = c.id;
       messagesEl.innerHTML = "";
-      for (const m of c.messages) addMessage(m.role === "user" ? "user" : "assistant", m.content, (m.created_at || "").replace("T", " ").slice(0, 16));
+      for (const m of c.messages) addMessage(m.role === "user" ? "user" : "assistant", m.content, fmtTime(m.created_at));
       $("convBadge").textContent = "불러옴 · " + c.title.slice(0, 18); $("convBadge").className = "badge badge-ok";
       document.querySelectorAll(".history-item").forEach((b) => b.classList.toggle("active", b.textContent.startsWith(c.title)));
       chatInput.focus();
