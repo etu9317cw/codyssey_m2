@@ -61,6 +61,12 @@
 
   async function loadHealth() {
     const badge = $("serverBadge");
+    // 무료 서버는 잠들어 있으면 첫 응답이 늦다 → 2.5초가 지나면 기다리는 이유를 보여 준다
+    const slow = setTimeout(() => {
+      badge.textContent = "무료 서버 깨우는 중… 최대 약 50초";
+      badge.title = "무료 서버는 15분 동안 요청이 없으면 잠듭니다. 처음 연결할 때 깨어나는 시간이 걸립니다.";
+      badge.className = "badge badge-warn badge-wake";
+    }, 2500);
     try {
       const h = await api("/api/health", { timeout: 60000 });
       UNIT = h.unit || UNIT; $("unitLabel").textContent = `(${UNIT})`;
@@ -68,6 +74,8 @@
       badge.className = "badge " + (h.llm_configured ? "badge-ok" : "badge-warn");
     } catch (e) {
       badge.textContent = "서버 연결 실패"; badge.className = "badge badge-err";
+    } finally {
+      clearTimeout(slow); badge.title = "백엔드 상태";
     }
   }
 

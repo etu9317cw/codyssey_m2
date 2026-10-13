@@ -123,7 +123,7 @@ python -m http.server 5500             # http://localhost:5500
 1. **Firebase**: 콘솔 → 프로젝트 추가 → Firestore Database 만들기(리전 asia-northeast3) → 프로젝트 설정 › 서비스 계정 › 새 비공개 키 생성. 보안 규칙은 클라이언트 접근 전부 거부(백엔드 Admin SDK만 접근).
 2. **Render**: New Web Service → **Public Git Repository**에 이 저장소 주소(GitHub 앱 권한 없이 연결) → Root Directory `backend`, Build `pip install -r requirements.txt`, Start `uvicorn main:app --host 0.0.0.0 --port $PORT`, Health Check Path `/api/health`, Free. 환경변수에 `STORAGE=firestore`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `FIREBASE_SERVICE_ACCOUNT_JSON=/etc/secrets/firebase-key.json`, `ALLOWED_ORIGINS=https://<프론트>.vercel.app`. **Secret Files**에 `firebase-key.json`(서비스 계정 키 JSON 전체)을 붙여 넣습니다. 배포 후 `/api/health`(`storage: firestore`)와 `/docs` 확인. Python은 Render 기본값(3.14)으로 빌드됩니다.
    - 공개 저장소 주소로 연결하면 push 뒤 자동 재배포가 되지 않을 수 있습니다. 백엔드를 고쳤거나 환경 변수를 "Save only"로 저장했으면 **Manual Deploy → Deploy latest commit**으로 다시 배포합니다.
-   - 무료 티어는 15분 미사용 시 잠들고 첫 요청에 최대 50초 걸립니다. 프론트는 채팅 타임아웃을 50초로 잡고 상단 배지로 상태를 보여 줍니다.
+   - 무료 티어는 15분 미사용 시 잠들고 첫 요청에 최대 50초 걸립니다. 프론트는 채팅 타임아웃을 50초로 잡고 상단 배지로 상태를 보여 줍니다. 서버 응답이 2.5초 넘게 없으면 배지가 "무료 서버 깨우는 중… 최대 약 50초"로 바뀌어 기다리는 이유를 알려 줍니다.
 3. **Vercel**: GitHub의 Vercel 앱에 이 저장소 접근을 허용 → Add New Project → 같은 저장소 → Root Directory `frontend`, Framework Other, **Output Directory `.`**(Override를 켜고 점 하나 — 비워 두면 `public` 폴더를 찾다가 "No Output Directory named 'public'"으로 실패). 환경 변수 `API_BASE_URL=https://<백엔드>.onrender.com`을 등록하고, `config.js`는 커밋하지 않으므로 Build Command에 아래를 넣어 빌드 때 환경 변수로 만듭니다.
    ```
    echo "window.APP_CONFIG={API_BASE_URL:'$API_BASE_URL',REQUEST_TIMEOUT_MS:25000}" > config.js
